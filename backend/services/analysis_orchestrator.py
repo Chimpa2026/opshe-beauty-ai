@@ -31,6 +31,8 @@ from backend.services.skin_analyzer import (
     calculate_overall_score,
 )
 from ai.recommendation_engine import generate_recommendations
+from ai.ai_recommendation import get_ai_recommendation
+import asyncio
 
 import numpy as np
 import cv2
@@ -171,9 +173,18 @@ def analyze_image(image_bytes: bytes) -> Dict[str, Any]:
         ],
     }
 
-    # ── 9. Recommendations ──
-    logger.info(f"[{session_id}] Generating recommendations")
-    recommendations = generate_recommendations(result)
+    # ── 9. Recommendations — Claude AI primary, rule engine fallback ──
+    logger.info(f"[{session_id}] Generating AI recommendations...")
+    try:
+        loop = asyncio.new_event_loop()
+        recommendations = loop.run_until_complete(get_ai_recommendation(result))
+        loop.close()
+        if recommendations is None:
+            raise ValueError("AI recommendation kosong")
+        logger.info(f"[{session_id}] Menggunakan Claude AI recommendation.")
+    except Exception as e:
+        logger.warning(f"[{session_id}] Fallback ke rule engine: {e}")
+        recommendations = generate_recommendations(result)
     result["recommendations"] = recommendations
     result["morning_routine"] = recommendations["morning_routine"]
     result["night_routine"] = recommendations["night_routine"]

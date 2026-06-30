@@ -28,6 +28,9 @@ class Settings:
     # AI Model paths
     MODEL_DIR: Path = BASE_DIR / "models"
 
+    # Anthropic
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "opshe-secret-key-change-in-production")
 
