@@ -48,39 +48,32 @@ def _get_recommendation_sync(result: Dict[str, Any]) -> Dict[str, Any]:
             for z in zones
         ])
 
-        prompt = f"""Kamu adalah dermatolog AI. Berikan rekomendasi skincare personal berdasarkan data analisis kulit berikut.
+        prompt = f"""Kamu adalah dermatolog AI. Berikan rekomendasi skincare personal berdasarkan data ini.
 
-DATA ANALISIS:
-- Jenis Kulit: {result.get('skin_type')} (confidence: {result.get('skin_type_confidence',0)*100:.0f}%)
-- Skor: {result.get('overall_score')}/100
-- Kadar Minyak: {result.get('oil_level')}%
-- Kekeringan: {result.get('dryness')}%
-- Visibilitas Pori: {result.get('pore_visibility')}%
-- Kemerahan: {result.get('redness')}%
-- Pigmentasi: {result.get('pigmentation')}%
-- Tekstur: {result.get('skin_texture')}
-- Jerawat: {acne.get('acne',0)}, Komedo Putih: {acne.get('whitehead',0)}, Komedo Hitam: {acne.get('blackhead',0)}, Bekas: {acne.get('acne_scar',0)}
-- Lingkaran Hitam: {result.get('dark_circle_level')}
-- Garis Halus: {result.get('fine_lines_level')}
-- Warna Kulit: {result.get('skin_tone')} | Undertone: {result.get('undertone')}
+DATA:
+Jenis Kulit: {result.get('skin_type')} | Skor: {result.get('overall_score')}/100
+Minyak: {result.get('oil_level')}% | Kering: {result.get('dryness')}% | Pori: {result.get('pore_visibility')}%
+Kemerahan: {result.get('redness')}% | Pigmentasi: {result.get('pigmentation')}% | Tekstur: {result.get('skin_texture')}
+Jerawat: {acne.get('acne',0)} | Komedo Putih: {acne.get('whitehead',0)} | Komedo Hitam: {acne.get('blackhead',0)} | Bekas: {acne.get('acne_scar',0)}
+Lingkaran Hitam: {result.get('dark_circle_level')} | Garis Halus: {result.get('fine_lines_level')}
+Warna Kulit: {result.get('skin_tone')} | Undertone: {result.get('undertone')}
 
-Zona Wajah:
-{zone_text}
+ATURAN PRIORITAS REKOMENDASI:
+1. Tentukan 3 masalah UTAMA berdasarkan data (bukan semua masalah)
+2. Pilih bahan aktif yang mengatasi KOMBINASI masalah sekaligus (misal Niacinamide untuk minyak+pori+pigmentasi)
+3. HINDARI konflik: Retinol TIDAK boleh bersamaan dengan AHA/BHA di rutinitas sama
+4. Maksimal 3 bahan aktif per produk — jangan terlalu banyak
+5. Urutan pagi: Cleanser > Toner > Serum > Moisturizer > SPF
+6. Urutan malam: Oil Cleanser > Cleanser > Treatment > Moisturizer > (opsional mask)
+7. JANGAN sebut nama merek
+8. Bahasa Indonesia
 
-INSTRUKSI:
-- JANGAN sebut nama merek produk
-- Hanya rekomendasikan jenis produk dan bahan aktif
-- Bahasa Indonesia
-- Pertimbangkan SEMUA parameter dan kombinasinya
-- Hindari konflik bahan aktif
-
-Balas HANYA dalam JSON (tanpa markdown):
-
-{{"concerns":["masalah utama"],"morning_routine":[{{"step":1,"product_type":"nama produk","ingredients":["bahan"],"why":"alasan"}}],"night_routine":[{{"step":1,"product_type":"nama produk","ingredients":["bahan"],"why":"alasan","note":null}}],"weekly_treatments":[{{"product_type":"nama","ingredients":["bahan"],"why":"alasan"}}],"key_ingredients":["bahan penting"],"ingredients_by_concern":{{"kondisi":["bahan"]}},"lifestyle_tips":["tips"],"disclaimer":"Hasil analisis merupakan estimasi berbasis AI dari citra wajah dan tidak menggantikan diagnosis atau konsultasi dengan dokter kulit."}}"""
+Balas HANYA JSON valid ini:
+{{"concerns":["max 3 masalah utama"],"morning_routine":[{{"step":1,"product_type":"Gentle Cleanser","ingredients":["bahan1","bahan2"],"why":"alasan singkat"}},{{"step":2,"product_type":"Toner","ingredients":["bahan1"],"why":"alasan"}},{{"step":3,"product_type":"Serum","ingredients":["bahan1","bahan2","bahan3"],"why":"alasan"}},{{"step":4,"product_type":"Moisturizer","ingredients":["bahan1","bahan2"],"why":"alasan"}},{{"step":5,"product_type":"Sunscreen","ingredients":["SPF50+","PA++++"],"why":"wajib setiap pagi"}}],"night_routine":[{{"step":1,"product_type":"Oil Cleanser","ingredients":["bahan1"],"why":"alasan","note":null}},{{"step":2,"product_type":"Gentle Cleanser","ingredients":["bahan1","bahan2"],"why":"alasan","note":null}},{{"step":3,"product_type":"Treatment Serum","ingredients":["bahan1","bahan2"],"why":"alasan","note":"catatan jika ada atau null"}},{{"step":4,"product_type":"Moisturizer","ingredients":["bahan1","bahan2"],"why":"alasan","note":null}},{{"step":5,"product_type":"Sleeping Mask","ingredients":["bahan1","bahan2"],"why":"alasan","note":"2-3x seminggu"}}],"weekly_treatments":[{{"product_type":"nama","ingredients":["bahan"],"why":"alasan"}}],"key_ingredients":["max 6 bahan terpenting"],"ingredients_by_concern":{{"nama_kondisi":["bahan1","bahan2"]}},"lifestyle_tips":["tip1","tip2","tip3"],"disclaimer":"Hasil analisis merupakan estimasi berbasis AI dari citra wajah dan tidak menggantikan diagnosis atau konsultasi dengan dokter kulit."}}"""
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=2000,
+            max_tokens=4000,
             messages=[{"role": "user", "content": prompt}]
         )
 
