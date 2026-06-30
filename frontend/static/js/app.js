@@ -417,55 +417,58 @@ function generatePDF(data) {
   doc.text(`OPSHE Beauty AI — Laporan Analisis Kulit | ${userName}`, 10, 7);
   y = 18;
 
-  // ── Rutinitas Pagi
-  sectionTitle('RUTINITAS PAGI');
-  (data.morning_routine || []).forEach(s => {
+  // ── Helper render step
+  function renderStep(s) {
+    if (y > 260) {
+      doc.addPage();
+      doc.setFillColor(240, 41, 123);
+      doc.rect(0, 0, W, 10, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255,255,255);
+      doc.text('OPSHE Beauty AI — Laporan Analisis Kulit | ' + (userName||''), 10, 7);
+      y = 18;
+    }
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...pink);
-    doc.text(`${s.step}. ${s.product_type}`, 14, y);
+    doc.text(s.step + '. ' + s.product_type, 14, y);
     y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...muted);
-    doc.text(s.why || '', 18, y, { maxWidth: W - 30 });
-    y += 5;
-    if (s.ingredients && s.ingredients.length) {
-      doc.setFontSize(8);
-      doc.setTextColor(...purple);
-      doc.text('Bahan: ' + s.ingredients.join(', '), 18, y, { maxWidth: W - 30 });
-      y += 5;
-    }
-    if (s.note) {
+    if (s.why) {
       doc.setFontSize(7.5);
-      doc.setTextColor(...teal);
-      doc.text('💡 ' + s.note, 18, y, { maxWidth: W - 30 });
-      y += 4;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...muted);
+      const wLines = doc.splitTextToSize(s.why, W - 34);
+      doc.text(wLines, 18, y);
+      y += wLines.length * 4.2 + 1;
     }
-    y += 2;
-  });
+    if (s.ingredients && s.ingredients.length) {
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...purple);
+      const iLines = doc.splitTextToSize('Bahan: ' + s.ingredients.join(', '), W - 34);
+      doc.text(iLines, 18, y);
+      y += iLines.length * 4.2 + 1;
+    }
+    if (s.note && s.note !== 'null' && s.note !== null) {
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(...teal);
+      const nLines = doc.splitTextToSize('Catatan: ' + s.note, W - 34);
+      doc.text(nLines, 18, y);
+      y += nLines.length * 4.2 + 1;
+    }
+    y += 4;
+  }
 
+  // ── Rutinitas Pagi
+  sectionTitle('RUTINITAS PAGI');
+  (data.morning_routine || []).forEach(s => renderStep(s));
   y += 4;
 
   // ── Rutinitas Malam
   sectionTitle('RUTINITAS MALAM');
-  (data.night_routine || []).forEach(s => {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...pink);
-    doc.text(`${s.step}. ${s.product_type}`, 14, y);
-    y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...muted);
-    doc.text(s.why || '', 18, y, { maxWidth: W - 30 });
-    y += 5;
-    if (s.ingredients && s.ingredients.length) {
-      doc.setFontSize(8);
-      doc.setTextColor(...purple);
-      doc.text('Bahan: ' + s.ingredients.join(', '), 18, y, { maxWidth: W - 30 });
-      y += 5;
-    }
-    y += 2;
-  });
+  (data.night_routine || []).forEach(s => renderStep(s));
 
   // ── Footer semua halaman
   const pageCount = doc.getNumberOfPages();
