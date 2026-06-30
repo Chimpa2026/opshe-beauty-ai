@@ -17,18 +17,27 @@ def encode_image(image_bytes: bytes) -> str:
 
 
 def build_vision_prompt() -> str:
-    return """Kamu adalah dermatolog AI dengan keahlian analisis kulit wajah dari foto.
+    return """Kamu adalah dermatolog AI senior dengan spesialisasi analisis kulit wajah dari foto digital.
 
-Analisis foto wajah ini dengan SANGAT TELITI dan AKURAT.
+Analisis HANYA area kulit wajah yang terlihat langsung: dahi, hidung, pipi kiri, pipi kanan, dan dagu.
 
-PENTING:
-- Jika ada tanda-tanda makeup/kosmetik (foundation, blush, lipstik), ABAIKAN dan fokus pada kondisi kulit yang terlihat di balik makeup
-- Bedakan kemerahan ALAMI (rosacea, iritasi, jerawat meradang) vs kemerahan dari KOSMETIK
-- Jangan over-detect jerawat — hanya hitung yang benar-benar terlihat jelas sebagai lesi jerawat
-- Pigmentasi 100% TIDAK MUNGKIN kecuali wajah penuh bintik gelap
-- Nilai secara OBJEKTIF dan REALISTIS
+ATURAN KETAT — WAJIB DIIKUTI:
+1. ABAIKAN SEPENUHNYA: hijab, kerudung, jilbab, rambut, pakaian, latar belakang, aksesori
+2. ABAIKAN makeup kosmetik: blush on di pipi, lipstik, eyeshadow, eyeliner — ini BUKAN kondisi kulit
+3. Bedakan kemerahan ALAMI (jerawat meradang, rosacea) vs kemerahan dari BLUSH ON/kosmetik
+4. Hitung jerawat HANYA yang benar-benar terlihat sebagai lesi menonjol atau meradang — jangan hitung pori besar atau bayangan sebagai jerawat
+5. Pigmentasi TIDAK MUNGKIN 100% kecuali seluruh wajah penuh flek hitam — nilai realistis
+6. Bintik gelap TIDAK MUNGKIN 30 kecuali wajah penuh titik hitam — hitung yang benar-benar ada
+7. Jika kulit terlihat sehat dan bersih → berikan skor tinggi (70-90), jangan under-score
+8. Nilai OBJEKTIF berdasarkan kulit yang terlihat, bukan asumsi
 
-Analisis area berikut: Dahi, Hidung, Pipi Kiri, Pipi Kanan, Dagu.
+SKALA REFERENSI REALISTIS:
+- Kulit sangat sehat, bersih, merata → Skor 80-95
+- Kulit sehat, sedikit masalah minor → Skor 65-80
+- Kulit dengan beberapa masalah terlihat jelas → Skor 45-65
+- Kulit dengan banyak masalah jelas → Skor 25-45
+
+Analisis area: Dahi, Hidung, Pipi Kiri, Pipi Kanan, Dagu — HANYA kulit yang terlihat langsung.
 
 Parameter yang harus dianalisis:
 1. Jenis Kulit: Oily/Dry/Combination/Normal + confidence (0-1)
@@ -197,31 +206,37 @@ async def analyze_skin_with_vision(
 
 
 def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
-    """Hitung overall score dari hasil vision analysis."""
+    """Hitung overall score dari hasil vision analysis — fair scoring."""
     import numpy as np
 
     weights = {
-        "hydration":    0.18,
-        "texture":      0.15,
-        "pores":        0.12,
-        "acne":         0.20,
+        "hydration":    0.15,
+        "texture":      0.12,
+        "pores":        0.10,
+        "acne":         0.18,
         "pigmentation": 0.10,
         "redness":      0.10,
-        "dark_circles": 0.07,
-        "fine_lines":   0.08,
+        "dark_circles": 0.10,
+        "fine_lines":   0.10,
+        "skin_type":    0.05,
     }
 
     acne_m     = data.get("acne_metrics", {})
     acne_total = sum(acne_m.values())
 
-    hydration_score    = 100 - data.get("dryness", 30)
-    texture_score      = {"Smooth": 100, "Normal": 70, "Rough": 35}.get(data.get("skin_texture", "Normal"), 70)
-    pore_score         = 100 - data.get("pore_visibility", 30)
-    acne_score         = max(0, 100 - acne_total * 4)
-    pigmentation_score = 100 - data.get("pigmentation", 20)
-    redness_score      = 100 - data.get("redness", 15)
-    dark_circle_score  = {"None": 100, "Light": 78, "Medium": 48, "Heavy": 18}.get(data.get("dark_circle_level", "None"), 100)
-    fine_lines_score   = {"None": 100, "Mild": 78, "Moderate": 48, "Severe": 20}.get(data.get("fine_lines_level", "None"), 100)
+    # More lenient scoring
+    hydration_score    = 100 - (data.get("dryness", 25) * 0.8)
+    texture_score      = {"Smooth": 100, "Normal": 78, "Rough": 45}.get(data.get("skin_texture", "Normal"), 78)
+    pore_score         = 100 - (data.get("pore_visibility", 25) * 0.7)
+    acne_score         = max(0, 100 - acne_total * 3)
+    pigmentation_score = 100 - (data.get("pigmentation", 15) * 0.8)
+    redness_score      = 100 - (data.get("redness", 15) * 0.7)
+    dark_circle_score  = {"None": 100, "Light": 82, "Medium": 58, "Heavy": 28}.get(
+        data.get("dark_circle_level", "None"), 100)
+    fine_lines_score   = {"None": 100, "Mild": 82, "Moderate": 55, "Severe": 25}.get(
+        data.get("fine_lines_level", "None"), 100)
+    skin_type_score    = {"Normal": 100, "Combination": 85, "Oily": 75, "Dry": 70}.get(
+        data.get("skin_type", "Normal"), 85)
 
     score = (
         hydration_score    * weights["hydration"] +
@@ -231,7 +246,8 @@ def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
         pigmentation_score * weights["pigmentation"] +
         redness_score      * weights["redness"] +
         dark_circle_score  * weights["dark_circles"] +
-        fine_lines_score   * weights["fine_lines"]
+        fine_lines_score   * weights["fine_lines"] +
+        skin_type_score    * weights["skin_type"]
     )
 
     return round(float(np.clip(score, 0, 100)), 1)
