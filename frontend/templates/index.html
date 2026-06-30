@@ -118,6 +118,13 @@
     <div class="score-card">
       <div class="score-ring-wrap">
         <svg class="score-ring" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#FF006E"/>
+              <stop offset="50%" style="stop-color:#BF5AF2"/>
+              <stop offset="100%" style="stop-color:#00F5D4"/>
+            </linearGradient>
+          </defs>
           <circle class="ring-bg" cx="60" cy="60" r="50"/>
           <circle class="ring-fill" id="scoreArc" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
         </svg>
@@ -179,8 +186,7 @@
   <div class="footer-inner">
     <img src="/static/assets/logo.png" alt="Opshe" style="width:26px;height:26px;border-radius:50%" />
     <span>OPSHE Beauty AI · Platform Kecantikan Cerdas</span>
-    <span class="footer-sep">·</span>
-    <span>Didukung Computer Vision AI</span>
+    
   </div>
 </footer>
 
