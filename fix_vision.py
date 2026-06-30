@@ -1,4 +1,4 @@
-import logging
+code = '''import logging
 import json
 import base64
 from typing import Dict, Any, Optional
@@ -13,40 +13,40 @@ def encode_image(image_bytes: bytes) -> str:
 
 def build_vision_prompt() -> str:
     return (
-        "Kamu adalah dermatolog AI senior dengan spesialisasi analisis kulit wajah dari foto digital.\n\n"
-        "Analisis HANYA area kulit wajah: dahi, hidung, pipi kiri, pipi kanan, dagu.\n\n"
-        "ATURAN KETAT:\n"
-        "1. ABAIKAN: hijab, kerudung, rambut, pakaian, latar belakang\n"
-        "2. ABAIKAN makeup: blush on, lipstik, eyeshadow, eyeliner\n"
-        "3. Bedakan kemerahan ALAMI vs kemerahan dari kosmetik\n"
-        "4. Hitung jerawat HANYA yang benar-benar terlihat jelas\n"
-        "5. Pigmentasi TIDAK MUNGKIN 100% kecuali wajah penuh flek\n"
-        "6. Kulit sehat bersih = skor komponen 80-95\n"
-        "7. Nilai OBJEKTIF dan REALISTIS\n\n"
-        "Balas HANYA JSON ini (tanpa markdown):\n"
-        "{\n"
-        '  "skin_type": "Normal",\n'
-        '  "skin_type_confidence": 0.85,\n'
-        '  "oil_level": 35.0,\n'
-        '  "dryness": 20.0,\n'
-        '  "pore_visibility": 25.0,\n'
-        '  "skin_texture": "Smooth",\n'
-        '  "acne_metrics": {"acne": 0, "whitehead": 0, "blackhead": 2, "acne_scar": 0},\n'
-        '  "redness": 10.0,\n'
-        '  "pigmentation": 15.0,\n'
-        '  "dark_spot_count": 1,\n'
-        '  "dark_circle_level": "None",\n'
-        '  "fine_lines_level": "None",\n'
-        '  "skin_tone": "Medium",\n'
-        '  "undertone": "Warm",\n'
-        '  "zones": [\n'
-        '    {"zone": "Forehead", "oil_level": 38.0, "dryness": 18.0, "pore_visibility": 28.0, "redness": 8.0, "texture": "Smooth"},\n'
-        '    {"zone": "Nose", "oil_level": 45.0, "dryness": 15.0, "pore_visibility": 35.0, "redness": 10.0, "texture": "Normal"},\n'
-        '    {"zone": "Left Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 12.0, "texture": "Smooth"},\n'
-        '    {"zone": "Right Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 11.0, "texture": "Smooth"},\n'
-        '    {"zone": "Chin", "oil_level": 35.0, "dryness": 20.0, "pore_visibility": 25.0, "redness": 9.0, "texture": "Normal"}\n'
-        '  ],\n'
-        '  "analysis_notes": "catatan kondisi kulit"\n'
+        "Kamu adalah dermatolog AI senior dengan spesialisasi analisis kulit wajah dari foto digital.\\n\\n"
+        "Analisis HANYA area kulit wajah: dahi, hidung, pipi kiri, pipi kanan, dagu.\\n\\n"
+        "ATURAN KETAT:\\n"
+        "1. ABAIKAN: hijab, kerudung, rambut, pakaian, latar belakang\\n"
+        "2. ABAIKAN makeup: blush on, lipstik, eyeshadow, eyeliner\\n"
+        "3. Bedakan kemerahan ALAMI vs kemerahan dari kosmetik\\n"
+        "4. Hitung jerawat HANYA yang benar-benar terlihat jelas\\n"
+        "5. Pigmentasi TIDAK MUNGKIN 100% kecuali wajah penuh flek\\n"
+        "6. Kulit sehat bersih = skor komponen 80-95\\n"
+        "7. Nilai OBJEKTIF dan REALISTIS\\n\\n"
+        "Balas HANYA JSON ini (tanpa markdown):\\n"
+        "{\\n"
+        '  "skin_type": "Normal",\\n'
+        '  "skin_type_confidence": 0.85,\\n'
+        '  "oil_level": 35.0,\\n'
+        '  "dryness": 20.0,\\n'
+        '  "pore_visibility": 25.0,\\n'
+        '  "skin_texture": "Smooth",\\n'
+        '  "acne_metrics": {"acne": 0, "whitehead": 0, "blackhead": 2, "acne_scar": 0},\\n'
+        '  "redness": 10.0,\\n'
+        '  "pigmentation": 15.0,\\n'
+        '  "dark_spot_count": 1,\\n'
+        '  "dark_circle_level": "None",\\n'
+        '  "fine_lines_level": "None",\\n'
+        '  "skin_tone": "Medium",\\n'
+        '  "undertone": "Warm",\\n'
+        '  "zones": [\\n'
+        '    {"zone": "Forehead", "oil_level": 38.0, "dryness": 18.0, "pore_visibility": 28.0, "redness": 8.0, "texture": "Smooth"},\\n'
+        '    {"zone": "Nose", "oil_level": 45.0, "dryness": 15.0, "pore_visibility": 35.0, "redness": 10.0, "texture": "Normal"},\\n'
+        '    {"zone": "Left Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 12.0, "texture": "Smooth"},\\n'
+        '    {"zone": "Right Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 11.0, "texture": "Smooth"},\\n'
+        '    {"zone": "Chin", "oil_level": 35.0, "dryness": 20.0, "pore_visibility": 25.0, "redness": 9.0, "texture": "Normal"}\\n'
+        '  ],\\n'
+        '  "analysis_notes": "catatan kondisi kulit"\\n'
         "}"
     )
 
@@ -64,9 +64,9 @@ def analyze_skin_with_vision(image_bytes: bytes) -> Optional[Dict[str, Any]]:
         image_b64 = encode_image(image_bytes)
 
         media_type = "image/jpeg"
-        if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        if image_bytes[:8] == b\'\\x89PNG\\r\\n\\x1a\\n\':
             media_type = "image/png"
-        elif image_bytes[:4] == b'RIFF':
+        elif image_bytes[:4] == b\'RIFF\':
             media_type = "image/webp"
 
         logger.info("Mengirim foto ke Claude Vision API...")
@@ -149,3 +149,8 @@ def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
     )
 
     return round(float(np.clip(score, 0, 100)), 1)
+'''
+
+with open('ai/vision_analyzer.py', 'w', encoding='utf-8') as f:
+    f.write(code)
+print('vision_analyzer.py fixed!')
