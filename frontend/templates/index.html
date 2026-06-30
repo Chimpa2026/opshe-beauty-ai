@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OPSHE Beauty AI — Analisis Kulit Virtual</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Nunito:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/main.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -18,16 +18,15 @@
   </div>
   <nav class="header-nav">
     <a href="#cara-kerja">Cara Kerja</a>
-    
   </nav>
 </header>
 
 <section class="hero" id="home">
   <div class="hero-inner">
     <img src="/static/assets/logo.png" alt="Opshe Logo" class="hero-logo" />
-    <p class="hero-eyebrow">Teknologi AI Kecantikan</p>
+    <p class="hero-eyebrow">Opshe Beauty Intelligence Ai-Powered Skin Analyzer</p>
     <h1 class="hero-title">Analisis Kulit<br/><em>Virtual Cerdas</em></h1>
-    <p class="hero-sub">Analisis kulit presisi dengan 13 parameter — rekomendasi bahan aktif personal, tanpa nama merek, tanpa tebak-tebakan.</p>
+    <p class="hero-sub">Analisis kulit presisi dengan 13 parameter — rekomendasi bahan aktif personal.</p>
     <div class="hero-cta">
       <button class="btn-primary" id="btnCamera">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -60,6 +59,25 @@
   </div>
 </section>
 
+<!-- MODAL NAMA USER -->
+<div class="modal-overlay hidden" id="nameModal">
+  <div class="modal">
+    <h2 class="modal-title">Halo! Siapa Namamu? ✨</h2>
+    <p class="modal-hint">Masukkan namamu untuk hasil analisis yang lebih personal.</p>
+    <div class="name-input-wrap">
+      <input type="text" id="userNameInput" placeholder="Masukkan nama kamu..." maxlength="50" />
+      <p class="name-error hidden" id="nameError">⚠ Nama wajib diisi untuk melanjutkan.</p>
+    </div>
+    <div class="name-actions">
+      <button class="btn-primary" id="btnNameNext">
+        Lanjutkan
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KAMERA -->
 <div class="modal-overlay hidden" id="cameraModal">
   <div class="modal">
     <button class="modal-close" id="closeCamera">✕</button>
@@ -77,6 +95,7 @@
   </div>
 </div>
 
+<!-- MODAL PREVIEW -->
 <div class="modal-overlay hidden" id="previewModal">
   <div class="modal">
     <button class="modal-close" id="closePreview">✕</button>
@@ -89,6 +108,7 @@
   </div>
 </div>
 
+<!-- LOADING -->
 <div class="modal-overlay hidden" id="loadingOverlay">
   <div class="loading-card">
     <div class="loading-ring"><div></div><div></div><div></div><div></div></div>
@@ -98,23 +118,39 @@
   </div>
 </div>
 
+<!-- DASHBOARD -->
 <section class="dashboard hidden" id="dashboard">
   <div class="dashboard-inner">
 
     <div class="dash-header">
       <div>
-        <p class="section-eyebrow" style="color:var(--pink)">Analisis Selesai ✨</p>
+        <p class="section-eyebrow" style="color:var(--teal)">Analisis Selesai ✨</p>
         <h2 class="dash-title">Laporan Kulit Anda</h2>
       </div>
       <div class="dash-actions">
         <button class="btn-secondary" id="btnReanalyze">🔄 Analisis Ulang</button>
         <button class="btn-download" id="btnDownloadPdf">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Unduh PDF
         </button>
       </div>
     </div>
 
+    <!-- USER PROFILE CARD -->
+    <div class="user-profile-card" id="userProfileCard">
+      <div class="user-avatar-wrap">
+        <img id="userAvatarImg" src="" alt="Foto" class="user-avatar" />
+        <div class="user-avatar-ring"></div>
+      </div>
+      <div class="user-info">
+        <p class="user-greeting">Halo, Cantik! 💖</p>
+        <h3 class="user-name" id="userNameDisplay">—</h3>
+        <p class="user-badge">✦ Skin Analysis Report</p>
+      </div>
+      <div class="user-scan-lines"></div>
+    </div>
+
+    <!-- SCORE -->
     <div class="score-card">
       <div class="score-ring-wrap">
         <svg class="score-ring" viewBox="0 0 120 120">
@@ -146,22 +182,22 @@
     </div>
 
     <div class="metrics-section">
-      <h3 class="metrics-heading">📊 Metrik Kulit</h3>
+      <h3 class="metrics-heading">[ METRIK KULIT ]</h3>
       <div class="metrics-grid" id="metricsGrid"></div>
     </div>
 
     <div class="acne-section">
-      <h3 class="metrics-heading">🔍 Analisis Jerawat & Noda</h3>
+      <h3 class="metrics-heading">[ ANALISIS JERAWAT & NODA ]</h3>
       <div class="acne-grid" id="acneGrid"></div>
     </div>
 
     <div class="zones-section">
-      <h3 class="metrics-heading">🗺️ Analisis Per Zona Wajah</h3>
+      <h3 class="metrics-heading">[ ANALISIS PER ZONA WAJAH ]</h3>
       <div class="zones-grid" id="zonesGrid"></div>
     </div>
 
     <div class="reco-section">
-      <h3 class="metrics-heading">💄 Rutinitas Personal Anda</h3>
+      <h3 class="metrics-heading">[ RUTINITAS PERSONAL ]</h3>
       <div class="routine-tabs">
         <button class="tab active" data-tab="morning">☀️ Pagi</button>
         <button class="tab" data-tab="night">🌙 Malam</button>
@@ -184,9 +220,8 @@
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <img src="/static/assets/logo.png" alt="Opshe" style="width:26px;height:26px;border-radius:50%" />
+    <img src="/static/assets/logo.png" alt="Opshe" style="width:26px;height:26px;border-radius:50%;border:1px solid var(--pink)" />
     <span>OPSHE Beauty AI · Platform Kecantikan Cerdas</span>
-    
   </div>
 </footer>
 
