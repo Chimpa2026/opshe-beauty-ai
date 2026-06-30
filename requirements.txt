@@ -34,4 +34,4 @@ aiofiles==23.2.1
 # tensorflow==2.16.1
 # torch==2.3.0
 
-anthropic==0.28.0
+anthropic==0.25.0
