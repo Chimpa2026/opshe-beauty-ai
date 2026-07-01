@@ -8,6 +8,7 @@ let lastResult = null;
 let userName = '';
 let userPhotoDataUrl = '';
 let pendingAction = null; // 'camera' or 'upload'
+let pendingFile = null;
 
 const $ = id => document.getElementById(id);
 
