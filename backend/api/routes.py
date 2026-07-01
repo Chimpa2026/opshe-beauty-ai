@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from backend.config.settings import settings
 from backend.database.db import get_db, AnalysisResult
 from backend.services.analysis_orchestrator import analyze_image
+from ai.vision_analyzer import BlurryPhotoError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -74,8 +75,18 @@ async def analyze_skin(
     # Run analysis
     try:
         result = analyze_image(image_bytes)
+    except BlurryPhotoError as e:
+        # Foto ditolak karena buram — kirim notif terstruktur yang dibaca frontend
+        return JSONResponse(status_code=422, content={"rejected": True, **e.notice})
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        # Penolakan lain (mis. wajah tidak terdeteksi) — bungkus format sama
+        # supaya frontend bisa munculkan modal notif yang konsisten, bukan alert polos.
+        return JSONResponse(status_code=422, content={
+            "rejected": True,
+            "title": "Foto Tidak Bisa Dianalisis",
+            "message": str(e),
+            "action_label": "Coba Lagi",
+        })
     except Exception as e:
         logger.exception(f"Unexpected error during analysis: {e}")
         raise HTTPException(status_code=500, detail="Internal analysis error. Please try again.")
