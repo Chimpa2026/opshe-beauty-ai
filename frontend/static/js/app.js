@@ -306,6 +306,159 @@ function generatePDF(data) {
   // ── Face Map Section ──
   const zones = data.zones || [];
   if (zones.length > 0) {
+
+    // Selesai face map section
+
+    const namaZonaPDF = {'Forehead':'Dahi','Nose':'Hidung','Left Cheek':'Pipi Kiri','Right Cheek':'Pipi Kanan','Chin':'Dagu'};
+    const rawAvgPDF = zones.reduce((a,zz) => a + calcZoneScorePDF(zz), 0) / (zones.length || 1);
+    const ratioPDF  = (data.overall_score || 60) / (rawAvgPDF || 1);
+    const zscores = {};
+    zones.forEach(z => {
+      const s = Math.round(Math.max(0, Math.min(100, calcZoneScorePDF(z) * ratioPDF)));
+      zscores[z.zone] = { score: s, zone: z };
+    });
+
+    function getZC(s) {
+      if (s>=80) return [29,158,117];
+      if (s>=60) return [55,138,221];
+      if (s>=40) return [186,117,23];
+      if (s>=20) return [216,90,48];
+      return [163,45,45];
+    }
+
+    // ── Layout: Diagram wajah kiri + bar chart kanan ──
+    const fX = 12, fY = y, fW = 78, fH = 105;
+    const dX = fX + fW + 8, dW = W - dX - 10;
+
+    // Background panel kiri
+    doc.setFillColor(250, 245, 255);
+    doc.roundedRect(fX, fY, fW, fH, 4, 4, 'F');
+    doc.setDrawColor(200, 180, 230);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(fX, fY, fW, fH, 4, 4, 'S');
+
+    const fcx = fX + fW/2;
+    const fcy = fY + fH/2 + 5;
+
+    // Outline wajah
+    doc.setDrawColor(210, 180, 230);
+    doc.setLineWidth(0.4);
+    doc.setLineDashPattern([1.5,1.5],0);
+    doc.ellipse(fcx, fcy, 30, 38);
+    doc.setLineDashPattern([],0);
+
+    // Draw zone ellipse
+    function drawZE(cx, cy, rx, ry, score, lbl) {
+      const c = getZC(score);
+      doc.setFillColor(c[0],c[1],c[2]);
+      doc.setFillColor(
+        Math.min(255,c[0]+185),
+        Math.min(255,c[1]+185),
+        Math.min(255,c[2]+185)
+      );
+      doc.setDrawColor(...c);
+      doc.setLineWidth(1);
+      doc.ellipse(cx, cy, rx, ry, 'FD');
+      doc.setFontSize(5.5);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...c);
+      doc.text(lbl, cx, cy-2, {align:'center'});
+      doc.setFontSize(10);
+      doc.text(String(score), cx, cy+5, {align:'center'});
+    }
+
+    const dahi      = zscores['Forehead']    || zscores['Dahi']       || {score:70};
+    const hidung    = zscores['Nose']        || zscores['Hidung']      || {score:70};
+    const pipiKiri  = zscores['Left Cheek']  || zscores['Pipi Kiri']  || {score:70};
+    const pipiKanan = zscores['Right Cheek'] || zscores['Pipi Kanan'] || {score:70};
+    const dagu      = zscores['Chin']        || zscores['Dagu']        || {score:70};
+
+    drawZE(fcx,      fcy-27, 20,11, dahi.score,      'DAHI');
+    drawZE(fcx,      fcy+1,   8,12, hidung.score,    'HIDUNG');
+    drawZE(fcx-21,   fcy+1,  11,15, pipiKiri.score,  'PIPI KIRI');
+    drawZE(fcx+21,   fcy+1,  11,15, pipiKanan.score, 'PIPI KANAN');
+    drawZE(fcx,      fcy+25, 14, 9, dagu.score,      'DAGU');
+
+    // Dekorasi mata
+    doc.setFillColor(180,160,200);
+    doc.ellipse(fcx-11, fcy-12, 5.5, 2.5, 'F');
+    doc.ellipse(fcx+11, fcy-12, 5.5, 2.5, 'F');
+    // Bibir
+    doc.setFillColor(240,41,123);
+    doc.ellipse(fcx, fcy+16, 6, 2.5, 'F');
+
+    // ── Panel kanan: bar chart ──
+    const allZ = [
+      {name:'Dahi',       d:dahi,      raw:dahi.zone      },
+      {name:'Hidung',     d:hidung,    raw:hidung.zone    },
+      {name:'Pipi Kiri',  d:pipiKiri,  raw:pipiKiri.zone  },
+      {name:'Pipi Kanan', d:pipiKanan, raw:pipiKanan.zone },
+      {name:'Dagu',       d:dagu,      raw:dagu.zone      },
+    ];
+
+    let dy2 = fY + 2;
+    allZ.forEach(z => {
+      const c    = getZC(z.d.score);
+      const bMax = dW - 20;
+      const bW   = Math.round((z.d.score/100)*bMax);
+
+      // Nama zona
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...c);
+      doc.text(z.name, dX, dy2+4);
+
+      // Bar background
+      doc.setFillColor(235,228,245);
+      doc.roundedRect(dX, dy2+6, bMax, 4.5, 1, 1, 'F');
+
+      // Bar fill
+      doc.setFillColor(...c);
+      if (bW>0) doc.roundedRect(dX, dy2+6, bW, 4.5, 1, 1, 'F');
+
+      // Skor
+      doc.setFontSize(8);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(...c);
+      doc.text(String(z.d.score), dX+bMax+3, dy2+10);
+
+      // Detail mini
+      if (z.raw) {
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica','normal');
+        doc.setTextColor(140,120,160);
+        doc.text(
+          'Minyak:'+Math.round(z.raw.oil_level||0)+'%  Pori:'+Math.round(z.raw.pore_visibility||0)+'%  Merah:'+Math.round(z.raw.redness||0)+'%',
+          dX, dy2+14
+        );
+        dy2 += 19;
+      } else {
+        dy2 += 16;
+      }
+    });
+
+    y += fH + 6;
+
+    // Legend
+    const leg2 = [
+      {l:'Sangat Baik (80-100)',c:[29,158,117]},
+      {l:'Baik (60-79)',        c:[55,138,221]},
+      {l:'Cukup (40-59)',       c:[186,117,23]},
+      {l:'Perlu Perhatian (<40)',c:[216,90,48]},
+    ];
+    let lx3 = 10;
+    leg2.forEach(l => {
+      doc.setFillColor(...l.c);
+      doc.circle(lx3+2, y+2, 2, 'F');
+      doc.setFontSize(6);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(100,80,130);
+      doc.text(l.l, lx3+5.5, y+3);
+      lx3 += 48;
+    });
+    y += 10;
+
+    // Cegah duplikasi — skip ke score section
     doc.setFillColor(245, 240, 255);
     doc.roundedRect(10, y, W - 20, 8, 2, 2, 'F');
     doc.setFillColor(167, 139, 250);
