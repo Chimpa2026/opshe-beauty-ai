@@ -1,4 +1,4 @@
-import logging
+code = '''import logging
 import json
 import base64
 from typing import Dict, Any, Optional
@@ -13,52 +13,52 @@ def encode_image(image_bytes: bytes) -> str:
 
 def build_vision_prompt() -> str:
     return (
-        "Kamu adalah dermatolog AI senior dengan spesialisasi analisis kulit wajah dari foto digital.\n\n"
-        "Analisis HANYA area kulit wajah yang terlihat langsung: dahi, hidung, pipi kiri, pipi kanan, dagu.\n\n"
-        "ATURAN KETAT - WAJIB DIIKUTI:\n"
-        "1. ABAIKAN SEPENUHNYA: hijab, kerudung, rambut, pakaian, latar belakang, aksesori\n"
-        "2. ABAIKAN makeup kosmetik: blush on, lipstik, eyeshadow, eyeliner\n"
-        "3. Bedakan kemerahan ALAMI vs kemerahan dari kosmetik/blush on\n"
-        "4. Hitung jerawat HANYA yang benar-benar terlihat sebagai lesi menonjol\n"
-        "5. Pigmentasi TIDAK MUNGKIN 100% kecuali seluruh wajah penuh flek hitam\n"
-        "6. Kulit sehat dan bersih = skor komponen 80-95\n"
-        "7. Nilai OBJEKTIF dan REALISTIS berdasarkan kulit yang terlihat\n"
+        "Kamu adalah dermatolog AI senior dengan spesialisasi analisis kulit wajah dari foto digital.\\n\\n"
+        "Analisis HANYA area kulit wajah yang terlihat langsung: dahi, hidung, pipi kiri, pipi kanan, dagu.\\n\\n"
+        "ATURAN KETAT - WAJIB DIIKUTI:\\n"
+        "1. ABAIKAN SEPENUHNYA: hijab, kerudung, rambut, pakaian, latar belakang, aksesori\\n"
+        "2. ABAIKAN makeup kosmetik: blush on, lipstik, eyeshadow, eyeliner\\n"
+        "3. Bedakan kemerahan ALAMI vs kemerahan dari kosmetik/blush on\\n"
+        "4. Hitung jerawat HANYA yang benar-benar terlihat sebagai lesi menonjol\\n"
+        "5. Pigmentasi TIDAK MUNGKIN 100% kecuali seluruh wajah penuh flek hitam\\n"
+        "6. Kulit sehat dan bersih = skor komponen 80-95\\n"
+        "7. Nilai OBJEKTIF dan REALISTIS berdasarkan kulit yang terlihat\\n"
         "8. ZONA HIDUNG - SANGAT PENTING: Bayangan/shadow alami di sisi kiri dan kanan hidung adalah efek pencahayaan NORMAL, BUKAN masalah kulit. "
         "Jangan hitung bayangan sebagai noda, pigmentasi, kemerahan, atau masalah kulit apapun. "
         "Analisis HANYA tekstur permukaan kulit hidung, visibilitas pori, dan kondisi nyata yang terlihat langsung di area hidung. "
-        "Hidung sehat tanpa jerawat atau komedo yang terlihat jelas = skor 70-90.\n"
+        "Hidung sehat tanpa jerawat atau komedo yang terlihat jelas = skor 70-90.\\n"
         "9. Bayangan di sekitar mata (periorbital shadow/eye socket shadow) adalah ANATOMI NORMAL, bukan lingkaran hitam. "
-        "Lingkaran hitam hanya dinilai dari perubahan warna kulit di bawah mata, bukan dari bayangan struktural.\n"
-        "10. Bayangan di sudut hidung, lipatan nasolabial, dan dagu adalah NORMAL akibat pencahayaan - ABAIKAN.\n\n"
-        "SKALA REFERENSI REALISTIS:\n"
-        "- Kulit sangat sehat, bersih, merata: skor komponen 80-95\n"
-        "- Kulit sehat dengan sedikit masalah minor: skor komponen 65-80\n"
-        "- Kulit dengan beberapa masalah terlihat jelas: skor komponen 45-65\n"
-        "- Kulit dengan banyak masalah nyata: skor komponen 25-45\n\n"
-        "Balas HANYA JSON ini (tanpa markdown):\n"
-        "{\n"
-        '  "skin_type": "Normal",\n'
-        '  "skin_type_confidence": 0.85,\n'
-        '  "oil_level": 35.0,\n'
-        '  "dryness": 20.0,\n'
-        '  "pore_visibility": 25.0,\n'
-        '  "skin_texture": "Smooth",\n'
-        '  "acne_metrics": {"acne": 0, "whitehead": 0, "blackhead": 2, "acne_scar": 0},\n'
-        '  "redness": 10.0,\n'
-        '  "pigmentation": 15.0,\n'
-        '  "dark_spot_count": 1,\n'
-        '  "dark_circle_level": "None",\n'
-        '  "fine_lines_level": "None",\n'
-        '  "skin_tone": "Medium",\n'
-        '  "undertone": "Warm",\n'
-        '  "zones": [\n'
-        '    {"zone": "Forehead", "oil_level": 38.0, "dryness": 18.0, "pore_visibility": 28.0, "redness": 8.0, "texture": "Smooth"},\n'
-        '    {"zone": "Nose", "oil_level": 45.0, "dryness": 15.0, "pore_visibility": 35.0, "redness": 10.0, "texture": "Normal"},\n'
-        '    {"zone": "Left Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 12.0, "texture": "Smooth"},\n'
-        '    {"zone": "Right Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 11.0, "texture": "Smooth"},\n'
-        '    {"zone": "Chin", "oil_level": 35.0, "dryness": 20.0, "pore_visibility": 25.0, "redness": 9.0, "texture": "Normal"}\n'
-        '  ],\n'
-        '  "analysis_notes": "catatan kondisi kulit"\n'
+        "Lingkaran hitam hanya dinilai dari perubahan warna kulit di bawah mata, bukan dari bayangan struktural.\\n"
+        "10. Bayangan di sudut hidung, lipatan nasolabial, dan dagu adalah NORMAL akibat pencahayaan - ABAIKAN.\\n\\n"
+        "SKALA REFERENSI REALISTIS:\\n"
+        "- Kulit sangat sehat, bersih, merata: skor komponen 80-95\\n"
+        "- Kulit sehat dengan sedikit masalah minor: skor komponen 65-80\\n"
+        "- Kulit dengan beberapa masalah terlihat jelas: skor komponen 45-65\\n"
+        "- Kulit dengan banyak masalah nyata: skor komponen 25-45\\n\\n"
+        "Balas HANYA JSON ini (tanpa markdown):\\n"
+        "{\\n"
+        \'  "skin_type": "Normal",\\n\'
+        \'  "skin_type_confidence": 0.85,\\n\'
+        \'  "oil_level": 35.0,\\n\'
+        \'  "dryness": 20.0,\\n\'
+        \'  "pore_visibility": 25.0,\\n\'
+        \'  "skin_texture": "Smooth",\\n\'
+        \'  "acne_metrics": {"acne": 0, "whitehead": 0, "blackhead": 2, "acne_scar": 0},\\n\'
+        \'  "redness": 10.0,\\n\'
+        \'  "pigmentation": 15.0,\\n\'
+        \'  "dark_spot_count": 1,\\n\'
+        \'  "dark_circle_level": "None",\\n\'
+        \'  "fine_lines_level": "None",\\n\'
+        \'  "skin_tone": "Medium",\\n\'
+        \'  "undertone": "Warm",\\n\'
+        \'  "zones": [\\n\'
+        \'    {"zone": "Forehead", "oil_level": 38.0, "dryness": 18.0, "pore_visibility": 28.0, "redness": 8.0, "texture": "Smooth"},\\n\'
+        \'    {"zone": "Nose", "oil_level": 45.0, "dryness": 15.0, "pore_visibility": 35.0, "redness": 10.0, "texture": "Normal"},\\n\'
+        \'    {"zone": "Left Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 12.0, "texture": "Smooth"},\\n\'
+        \'    {"zone": "Right Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 11.0, "texture": "Smooth"},\\n\'
+        \'    {"zone": "Chin", "oil_level": 35.0, "dryness": 20.0, "pore_visibility": 25.0, "redness": 9.0, "texture": "Normal"}\\n\'
+        \'  ],\\n\'
+        \'  "analysis_notes": "catatan kondisi kulit"\\n\'
         "}"
     )
 
@@ -76,9 +76,9 @@ def analyze_skin_with_vision(image_bytes: bytes) -> Optional[Dict[str, Any]]:
         image_b64 = encode_image(image_bytes)
 
         media_type = "image/jpeg"
-        if image_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        if image_bytes[:8] == b\'\\x89PNG\\r\\n\\x1a\\n\':
             media_type = "image/png"
-        elif image_bytes[:4] == b'RIFF':
+        elif image_bytes[:4] == b\'RIFF\':
             media_type = "image/webp"
 
         logger.info("Mengirim foto ke Claude Vision API...")
@@ -158,3 +158,8 @@ def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
     )
 
     return round(float(np.clip(score, 0, 100)), 1)
+'''
+
+with open('ai/vision_analyzer.py', 'w', encoding='utf-8') as f:
+    f.write(code)
+print('vision_analyzer.py updated!')
