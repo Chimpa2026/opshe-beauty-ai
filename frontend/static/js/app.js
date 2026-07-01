@@ -488,8 +488,6 @@ function generatePDF(data) {
       return zoneColors.score0;
     }
 
-    const namaZonaPDF = {'Forehead':'Dahi','Nose':'Hidung','Left Cheek':'Pipi Kiri','Right Cheek':'Pipi Kanan','Chin':'Dagu'};
-
     zones.forEach((z, i) => {
       const rawScore = calcZoneScorePDF(z);
       const ratio = data.overall_score / (zones.reduce((a,zz) => a + calcZoneScorePDF(zz), 0) / zones.length || 1);
