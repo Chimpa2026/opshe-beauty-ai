@@ -35,14 +35,17 @@ def build_vision_prompt() -> str:
         "- JANGAN beri skor tinggi jika kondisi kulit jelas bermasalah\n"
         "- JANGAN beri skor rendah jika kulit jelas sehat\n\n"
         "PANDUAN JERAWAT:\n"
-        "- Hitung HANYA lesi yang benar-benar terlihat jelas sebagai jerawat meradang/komedo\n"
-        "- Satu area dahi penuh jerawat meradang = acne 8-15, bukan 2-3\n"
-        "- Pipi penuh bekas jerawat = acne_scar 5-15\n"
-        "- Komedo hitam di hidung yang terlihat = blackhead 3-10\n"
-        "- ATURAN WAJIB: JANGAN PERNAH menebak atau mengarang jumlah jerawat/komedo/bekas jerawat.\n"
-        "  Jika kamu TIDAK YAKIN 100% ada lesi yang benar-benar terlihat jelas, isi 0 (nol).\n"
-        "  Kulit yang tampak bersih dan mulus WAJIB mendapat acne=0, whitehead=0, blackhead=0, acne_scar=0.\n"
-        "  Pori-pori normal, bayangan, tekstur kulit alami, atau warna kulit tidak merata BUKAN jerawat/komedo/bekas jerawat.\n\n"
+        "- Hitung SETIAP lesi (jerawat meradang, komedo, bekas jerawat) yang benar-benar terlihat jelas, satu per satu, per zona (dahi, hidung, pipi kiri, pipi kanan, dagu), lalu jumlahkan totalnya.\n"
+        "- JANGAN membulatkan ke angka kecil hanya karena jumlahnya banyak — kalau memang terlihat puluhan titik jerawat, laporkan jumlah sebenarnya, bukan estimasi kasar yang diremehkan.\n\n"
+        "KALIBRASI TINGKAT KEPARAHAN JERAWAT (acne + whitehead + blackhead + acne_scar):\n"
+        "- Bersih/nyaris tanpa lesi: total 0-3\n"
+        "- Ringan (beberapa titik terpisah di 1-2 zona): total 4-10\n"
+        "- Sedang (cluster jerawat di beberapa zona): total 11-20\n"
+        "- Berat (banyak jerawat meradang di sebagian besar zona wajah): total 21-40\n"
+        "- Sangat berat (hampir seluruh wajah/dahi/pipi dipenuhi papul-pustul meradang, jelas terlihat dari jarak normal): total 40-70+ — JANGAN ragu memberi angka setinggi ini kalau memang itu yang terlihat di foto.\n"
+        "- Satu zona (misal dahi atau pipi) yang PENUH jerawat meradang sendiri bisa menyumbang 10-25+ titik pada zona itu saja.\n\n"
+        "- Aturan 'kalau ragu isi 0' HANYA berlaku untuk kondisi yang ambigu/tidak jelas (misal kulit tampak mulus tapi ada bayangan/pori biasa).\n"
+        "  Aturan itu TIDAK BERLAKU jika lesi jerawat memang jelas dan banyak terlihat — dalam kasus itu WAJIB dihitung mendekati jumlah sebenarnya, bukan diremehkan.\n\n"
         "TENTANG BLUSH/RONA PIPI:\n"
         "- Warna pink/merah muda merata di pipi (blush on, rona alami, atau efek pencahayaan hangat) HARUS diabaikan total.\n"
         "- JANGAN tafsirkan blush/rona pipi sebagai kemerahan kulit, bekas jerawat, ATAU pigmentasi.\n"
@@ -178,5 +181,19 @@ def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
         fine_lines_score   * 0.07 +
         skin_type_score    * 0.05
     )
+
+    # ── Cap tingkat keparahan: begitu jerawat mentok di 0 (acne_score capped),
+    # komponen lain (hidrasi, lingkaran hitam, dll) tidak boleh menyeret skor
+    # akhir naik terlalu tinggi untuk kasus yang jelas parah secara visual.
+    if acne_total >= 60 or acne_active >= 35:
+        score = min(score, 22)
+    elif acne_total >= 45 or acne_active >= 25:
+        score = min(score, 30)
+    elif acne_total >= 30 or acne_active >= 18:
+        score = min(score, 38)
+    elif acne_total >= 20 or acne_active >= 12:
+        score = min(score, 48)
+    elif acne_total >= 10 or acne_active >= 6:
+        score = min(score, 62)
 
     return round(float(np.clip(score, 0, 100)), 1)
