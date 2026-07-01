@@ -27,6 +27,15 @@ def build_vision_prompt() -> str:
         "- Bayangan di bawah mata dari tulang wajah = normal, BUKAN lingkaran hitam\n"
         "- Bayangan di dagu/rahang dari pencahayaan = normal, ABAIKAN\n"
         "- HANYA nilai kondisi PERMUKAAN KULIT yang nyata, bukan efek cahaya\n\n"
+        "=== KUALITAS FOTO — WAJIB DICEK PERTAMA KALI ===\n"
+        "Sebelum menilai apapun, tentukan dulu apakah foto cukup jelas untuk dianalisis:\n"
+        "- Foto BURAM/blur/tidak fokus, terlalu gelap, terlalu jauh/kecil, atau resolusi rendah sehingga pori/tekstur/jerawat TIDAK bisa dibedakan dengan jelas → set \"image_quality\": \"Blurry\"\n"
+        "- Foto jelas dan detail kulit (pori, tekstur, lesi) bisa dibedakan dengan baik → set \"image_quality\": \"Good\"\n\n"
+        "ATURAN WAJIB kalau image_quality = \"Blurry\":\n"
+        "- JANGAN beri skor tinggi/bersih hanya karena tidak terlihat jelas ada masalah — 'tidak terlihat' BUKAN berarti 'bersih'.\n"
+        "- Isi SEMUA metrik (oil_level, dryness, pore_visibility, redness, pigmentation) dengan nilai NETRAL/MODERAT (kisaran 35-50), BUKAN nilai rendah/bersih.\n"
+        "- Isi acne_metrics dengan 0 (karena memang tidak bisa dihitung akurat saat buram — jangan menebak jumlah), TAPI jangan sampai kombinasi metrik netral + acne 0 menghasilkan skor tinggi seperti kulit sempurna.\n"
+        "- Di \"analysis_notes\", WAJIB tulis dengan jelas: \"Foto terlalu buram/kurang jelas untuk analisis akurat. Mohon ambil ulang foto dengan pencahayaan cukup dan fokus tajam.\"\n\n"
         "TENTANG AKURASI SKOR:\n"
         "- Jika ada jerawat AKTIF banyak dan meradang: oil_level 60-85, redness 40-70, skor zona 30-55\n"
         "- Jika ada bekas jerawat/hiperpigmentasi jelas: pigmentasi 40-70\n"
@@ -59,6 +68,7 @@ def build_vision_prompt() -> str:
         "Default hidung sehat (tidak ada komedo/jerawat jelas): oil 35-55, dryness 10-20, pore 25-45, redness 8-18, texture Normal/Smooth\n\n"
         "Balas HANYA JSON (tanpa markdown, tanpa penjelasan):\n"
         "{\n"
+        '  "image_quality": "Good|Blurry",\n'
         '  "skin_type": "Normal|Oily|Dry|Combination",\n'
         '  "skin_type_confidence": 0.85,\n'
         '  "oil_level": 0-100,\n'
@@ -150,6 +160,50 @@ def analyze_skin_with_vision(image_bytes: bytes) -> Optional[Dict[str, Any]]:
         return None
 
 
+# ── Notifikasi standar yang ditampilkan ke user saat foto ditolak karena buram.
+# Dipakai oleh layer route/API — tampilkan ini di modal/toast frontend
+# (misal di elemen #cameraError kalau dari mode kamera, atau alert di preview modal).
+BLUR_REJECTION_NOTICE = {
+    "title": "Foto Terlalu Buram 😕",
+    "message": (
+        "Kami tidak bisa menganalisis kondisi kulitmu dengan akurat karena foto "
+        "ini buram/kurang fokus. Coba lagi dengan:\n"
+        "• Pencahayaan yang cukup terang\n"
+        "• Kamera fokus tajam ke wajah\n"
+        "• Wajah diam, tidak bergerak saat difoto"
+    ),
+    "action_label": "Ambil Ulang Foto",
+}
+
+
+def check_photo_quality(data: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    """
+    Cek apakah hasil analisis vision menandai foto sebagai buram.
+
+    Panggil fungsi ini TEPAT SETELAH analyze_skin_with_vision() dan SEBELUM
+    calculate_overall_score_from_vision(). Kalau hasilnya bukan None, jangan
+    lanjutkan ke perhitungan skor / simpan hasil — tolak permintaan dan
+    kirim balik notice ini ke frontend supaya user diminta foto ulang.
+    """
+    if data is None:
+        return None
+    if str(data.get("image_quality", "Good")).strip().lower() == "blurry":
+        return BLUR_REJECTION_NOTICE
+    return None
+
+
+class BlurryPhotoError(Exception):
+    """
+    Dilempar saat foto terlalu buram/kurang jelas untuk dianalisis akurat.
+    Ditangkap khusus di routes.py supaya bisa dikembalikan sebagai
+    {"rejected": True, "title": ..., "message": ..., "action_label": ...}
+    ke frontend, bukan error generik.
+    """
+    def __init__(self, notice: Dict[str, str]):
+        self.notice = notice
+        super().__init__(notice.get("message", "Foto terlalu buram untuk dianalisis."))
+
+
 def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
     acne_m = data.get("acne_metrics", {})
     acne_total = sum(acne_m.values())
@@ -195,5 +249,10 @@ def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
         score = min(score, 48)
     elif acne_total >= 10 or acne_active >= 6:
         score = min(score, 62)
+
+    # ── Jaring pengaman kualitas foto: foto buram tidak boleh dapat skor tinggi
+    # meski AI vision keliru menilai metrik terlalu optimis.
+    if str(data.get("image_quality", "Good")).strip().lower() == "blurry":
+        score = min(score, 65)
 
     return round(float(np.clip(score, 0, 100)), 1)
