@@ -38,7 +38,15 @@ def build_vision_prompt() -> str:
         "- Hitung HANYA lesi yang benar-benar terlihat jelas sebagai jerawat meradang/komedo\n"
         "- Satu area dahi penuh jerawat meradang = acne 8-15, bukan 2-3\n"
         "- Pipi penuh bekas jerawat = acne_scar 5-15\n"
-        "- Komedo hitam di hidung yang terlihat = blackhead 3-10\n\n"
+        "- Komedo hitam di hidung yang terlihat = blackhead 3-10\n"
+        "- ATURAN WAJIB: JANGAN PERNAH menebak atau mengarang jumlah jerawat/komedo/bekas jerawat.\n"
+        "  Jika kamu TIDAK YAKIN 100% ada lesi yang benar-benar terlihat jelas, isi 0 (nol).\n"
+        "  Kulit yang tampak bersih dan mulus WAJIB mendapat acne=0, whitehead=0, blackhead=0, acne_scar=0.\n"
+        "  Pori-pori normal, bayangan, tekstur kulit alami, atau warna kulit tidak merata BUKAN jerawat/komedo/bekas jerawat.\n\n"
+        "TENTANG BLUSH/RONA PIPI:\n"
+        "- Warna pink/merah muda merata di pipi (blush on, rona alami, atau efek pencahayaan hangat) HARUS diabaikan total.\n"
+        "- JANGAN tafsirkan blush/rona pipi sebagai kemerahan kulit, bekas jerawat, ATAU pigmentasi.\n"
+        "- Hanya nilai kemerahan/pigmentasi jika ada bercak/lesi yang jelas berbeda dari warna kulit sekitarnya (bukan gradasi rona pipi yang merata dan simetris kiri-kanan).\n\n"
         "PANDUAN KEMERAHAN:\n"
         "- Blush on/makeup = ABAIKAN, nilai 0\n"
         "- Kemerahan dari jerawat meradang = nilai nyata 20-60\n"
@@ -97,6 +105,7 @@ def analyze_skin_with_vision(image_bytes: bytes) -> Optional[Dict[str, Any]]:
         message = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=2000,
+            temperature=0,
             messages=[
                 {
                     "role": "user",
