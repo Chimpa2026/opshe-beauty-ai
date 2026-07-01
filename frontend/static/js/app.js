@@ -55,7 +55,6 @@ fileInput.addEventListener('change', e => {
   fileInput.value = '';
 });
 
-let pendingFile = null;
 
 // ══ NAMA MODAL ══
 btnNameNext.addEventListener('click', submitName);
