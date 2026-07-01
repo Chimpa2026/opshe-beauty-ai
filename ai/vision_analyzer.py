@@ -13,52 +13,63 @@ def encode_image(image_bytes: bytes) -> str:
 
 def build_vision_prompt() -> str:
     return (
-        "Kamu adalah dermatolog AI senior dengan spesialisasi analisis kulit wajah dari foto digital.\n\n"
-        "Analisis HANYA area kulit wajah yang terlihat langsung: dahi, hidung, pipi kiri, pipi kanan, dagu.\n\n"
-        "ATURAN KETAT - WAJIB DIIKUTI:\n"
-        "1. ABAIKAN SEPENUHNYA: hijab, kerudung, rambut, pakaian, latar belakang, aksesori\n"
-        "2. ABAIKAN makeup kosmetik: blush on, lipstik, eyeshadow, eyeliner\n"
-        "3. Bedakan kemerahan ALAMI vs kemerahan dari kosmetik/blush on\n"
-        "4. Hitung jerawat HANYA yang benar-benar terlihat sebagai lesi menonjol\n"
-        "5. Pigmentasi TIDAK MUNGKIN 100% kecuali seluruh wajah penuh flek hitam\n"
-        "6. Kulit sehat dan bersih = skor komponen 80-95\n"
-        "7. Nilai OBJEKTIF dan REALISTIS berdasarkan kulit yang terlihat\n"
-        "8. ZONA HIDUNG - SANGAT PENTING: Bayangan/shadow alami di sisi kiri dan kanan hidung adalah efek pencahayaan NORMAL, BUKAN masalah kulit. "
-        "Jangan hitung bayangan sebagai noda, pigmentasi, kemerahan, atau masalah kulit apapun. "
-        "Analisis HANYA tekstur permukaan kulit hidung, visibilitas pori, dan kondisi nyata yang terlihat langsung di area hidung. "
-        "Hidung sehat tanpa jerawat atau komedo yang terlihat jelas = skor 70-90.\n"
-        "9. Bayangan di sekitar mata (periorbital shadow/eye socket shadow) adalah ANATOMI NORMAL, bukan lingkaran hitam. "
-        "Lingkaran hitam hanya dinilai dari perubahan warna kulit di bawah mata, bukan dari bayangan struktural.\n"
-        "10. Bayangan di sudut hidung, lipatan nasolabial, dan dagu adalah NORMAL akibat pencahayaan - ABAIKAN.\n\n"
-        "SKALA REFERENSI REALISTIS:\n"
-        "- Kulit sangat sehat, bersih, merata: skor komponen 80-95\n"
-        "- Kulit sehat dengan sedikit masalah minor: skor komponen 65-80\n"
-        "- Kulit dengan beberapa masalah terlihat jelas: skor komponen 45-65\n"
-        "- Kulit dengan banyak masalah nyata: skor komponen 25-45\n\n"
-        "Balas HANYA JSON ini (tanpa markdown):\n"
+        "Kamu adalah dermatolog AI senior berpengalaman 20 tahun.\n\n"
+        "TUGAS: Analisis kondisi kulit wajah dari foto secara AKURAT dan JUJUR.\n\n"
+        "AREA YANG DIANALISIS: Dahi, Hidung, Pipi Kiri, Pipi Kanan, Dagu.\n\n"
+        "=== ATURAN KRITIS - WAJIB DIPATUHI ===\n\n"
+        "ABAIKAN SEPENUHNYA:\n"
+        "- Hijab, kerudung, jilbab, rambut, pakaian, aksesori\n"
+        "- Makeup: foundation, blush on, lipstik, eyeshadow, eyeliner\n"
+        "- Latar belakang/background foto\n\n"
+        "TENTANG BAYANGAN/SHADOW:\n"
+        "- Bayangan di sisi kiri/kanan hidung = efek 3D anatomi hidung, BUKAN masalah kulit\n"
+        "- Bayangan di lipatan nasolabial = normal, ABAIKAN\n"
+        "- Bayangan di bawah mata dari tulang wajah = normal, BUKAN lingkaran hitam\n"
+        "- Bayangan di dagu/rahang dari pencahayaan = normal, ABAIKAN\n"
+        "- HANYA nilai kondisi PERMUKAAN KULIT yang nyata, bukan efek cahaya\n\n"
+        "TENTANG AKURASI SKOR:\n"
+        "- Jika ada jerawat AKTIF banyak dan meradang: oil_level 60-85, redness 40-70, skor zona 30-55\n"
+        "- Jika ada bekas jerawat/hiperpigmentasi jelas: pigmentasi 40-70\n"
+        "- Jika kulit bersih tanpa masalah nyata: skor zona 75-95\n"
+        "- Hidung tanpa komedo/jerawat yang TERLIHAT JELAS: pore_visibility max 45, redness max 20\n"
+        "- JANGAN beri skor tinggi jika kondisi kulit jelas bermasalah\n"
+        "- JANGAN beri skor rendah jika kulit jelas sehat\n\n"
+        "PANDUAN JERAWAT:\n"
+        "- Hitung HANYA lesi yang benar-benar terlihat jelas sebagai jerawat meradang/komedo\n"
+        "- Satu area dahi penuh jerawat meradang = acne 8-15, bukan 2-3\n"
+        "- Pipi penuh bekas jerawat = acne_scar 5-15\n"
+        "- Komedo hitam di hidung yang terlihat = blackhead 3-10\n\n"
+        "PANDUAN KEMERAHAN:\n"
+        "- Blush on/makeup = ABAIKAN, nilai 0\n"
+        "- Kemerahan dari jerawat meradang = nilai nyata 20-60\n"
+        "- Kulit normal tanpa jerawat = redness 5-20\n\n"
+        "=== KALKULASI ZONA HIDUNG ===\n"
+        "Zona hidung harus HANYA menilai kulit permukaan hidung yang terlihat.\n"
+        "Default hidung sehat (tidak ada komedo/jerawat jelas): oil 35-55, dryness 10-20, pore 25-45, redness 8-18, texture Normal/Smooth\n\n"
+        "Balas HANYA JSON (tanpa markdown, tanpa penjelasan):\n"
         "{\n"
-        '  "skin_type": "Normal",\n'
+        '  "skin_type": "Normal|Oily|Dry|Combination",\n'
         '  "skin_type_confidence": 0.85,\n'
-        '  "oil_level": 35.0,\n'
-        '  "dryness": 20.0,\n'
-        '  "pore_visibility": 25.0,\n'
-        '  "skin_texture": "Smooth",\n'
-        '  "acne_metrics": {"acne": 0, "whitehead": 0, "blackhead": 2, "acne_scar": 0},\n'
-        '  "redness": 10.0,\n'
-        '  "pigmentation": 15.0,\n'
-        '  "dark_spot_count": 1,\n'
-        '  "dark_circle_level": "None",\n'
-        '  "fine_lines_level": "None",\n'
-        '  "skin_tone": "Medium",\n'
-        '  "undertone": "Warm",\n'
+        '  "oil_level": 0-100,\n'
+        '  "dryness": 0-100,\n'
+        '  "pore_visibility": 0-100,\n'
+        '  "skin_texture": "Smooth|Normal|Rough",\n'
+        '  "acne_metrics": {"acne": 0, "whitehead": 0, "blackhead": 0, "acne_scar": 0},\n'
+        '  "redness": 0-100,\n'
+        '  "pigmentation": 0-100,\n'
+        '  "dark_spot_count": 0,\n'
+        '  "dark_circle_level": "None|Light|Medium|Heavy",\n'
+        '  "fine_lines_level": "None|Mild|Moderate|Severe",\n'
+        '  "skin_tone": "Fair|Light|Medium|Tan|Deep",\n'
+        '  "undertone": "Cool|Warm|Neutral",\n'
         '  "zones": [\n'
-        '    {"zone": "Forehead", "oil_level": 38.0, "dryness": 18.0, "pore_visibility": 28.0, "redness": 8.0, "texture": "Smooth"},\n'
-        '    {"zone": "Nose", "oil_level": 45.0, "dryness": 15.0, "pore_visibility": 35.0, "redness": 10.0, "texture": "Normal"},\n'
-        '    {"zone": "Left Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 12.0, "texture": "Smooth"},\n'
-        '    {"zone": "Right Cheek", "oil_level": 30.0, "dryness": 22.0, "pore_visibility": 20.0, "redness": 11.0, "texture": "Smooth"},\n'
-        '    {"zone": "Chin", "oil_level": 35.0, "dryness": 20.0, "pore_visibility": 25.0, "redness": 9.0, "texture": "Normal"}\n'
+        '    {"zone": "Forehead", "oil_level": 0-100, "dryness": 0-100, "pore_visibility": 0-100, "redness": 0-100, "texture": "Smooth|Normal|Rough"},\n'
+        '    {"zone": "Nose", "oil_level": 0-100, "dryness": 0-100, "pore_visibility": 0-100, "redness": 0-100, "texture": "Smooth|Normal|Rough"},\n'
+        '    {"zone": "Left Cheek", "oil_level": 0-100, "dryness": 0-100, "pore_visibility": 0-100, "redness": 0-100, "texture": "Smooth|Normal|Rough"},\n'
+        '    {"zone": "Right Cheek", "oil_level": 0-100, "dryness": 0-100, "pore_visibility": 0-100, "redness": 0-100, "texture": "Smooth|Normal|Rough"},\n'
+        '    {"zone": "Chin", "oil_level": 0-100, "dryness": 0-100, "pore_visibility": 0-100, "redness": 0-100, "texture": "Smooth|Normal|Rough"}\n'
         '  ],\n'
-        '  "analysis_notes": "catatan kondisi kulit"\n'
+        '  "analysis_notes": "deskripsi kondisi kulit yang terlihat"\n'
         "}"
     )
 
@@ -130,30 +141,32 @@ def analyze_skin_with_vision(image_bytes: bytes) -> Optional[Dict[str, Any]]:
 def calculate_overall_score_from_vision(data: Dict[str, Any]) -> float:
     acne_m = data.get("acne_metrics", {})
     acne_total = sum(acne_m.values())
+    acne_active = acne_m.get("acne", 0)
 
     hydration_score    = 100 - (data.get("dryness", 25) * 0.8)
-    texture_map        = {"Smooth": 100, "Normal": 78, "Rough": 45}
-    texture_score      = texture_map.get(data.get("skin_texture", "Normal"), 78)
-    pore_score         = 100 - (data.get("pore_visibility", 25) * 0.7)
-    acne_score         = max(0, 100 - acne_total * 3)
-    pigmentation_score = 100 - (data.get("pigmentation", 15) * 0.8)
-    redness_score      = 100 - (data.get("redness", 15) * 0.7)
-    dc_map             = {"None": 100, "Light": 82, "Medium": 58, "Heavy": 28}
+    texture_map        = {"Smooth": 100, "Normal": 75, "Rough": 40}
+    texture_score      = texture_map.get(data.get("skin_texture", "Normal"), 75)
+    pore_score         = 100 - (data.get("pore_visibility", 25) * 0.75)
+    # Penalti lebih berat untuk jerawat aktif
+    acne_score         = max(0, 100 - (acne_active * 5) - (acne_total * 2))
+    pigmentation_score = 100 - (data.get("pigmentation", 15) * 0.85)
+    redness_score      = 100 - (data.get("redness", 15) * 0.75)
+    dc_map             = {"None": 100, "Light": 82, "Medium": 55, "Heavy": 25}
     dark_circle_score  = dc_map.get(data.get("dark_circle_level", "None"), 100)
-    fl_map             = {"None": 100, "Mild": 82, "Moderate": 55, "Severe": 25}
+    fl_map             = {"None": 100, "Mild": 80, "Moderate": 52, "Severe": 22}
     fine_lines_score   = fl_map.get(data.get("fine_lines_level", "None"), 100)
-    st_map             = {"Normal": 100, "Combination": 85, "Oily": 75, "Dry": 70}
-    skin_type_score    = st_map.get(data.get("skin_type", "Normal"), 85)
+    st_map             = {"Normal": 100, "Combination": 82, "Oily": 72, "Dry": 68}
+    skin_type_score    = st_map.get(data.get("skin_type", "Normal"), 82)
 
     score = (
-        hydration_score    * 0.15 +
-        texture_score      * 0.12 +
+        hydration_score    * 0.13 +
+        texture_score      * 0.13 +
         pore_score         * 0.10 +
-        acne_score         * 0.18 +
+        acne_score         * 0.22 +
         pigmentation_score * 0.10 +
-        redness_score      * 0.10 +
-        dark_circle_score  * 0.10 +
-        fine_lines_score   * 0.10 +
+        redness_score      * 0.12 +
+        dark_circle_score  * 0.08 +
+        fine_lines_score   * 0.07 +
         skin_type_score    * 0.05
     )
 
