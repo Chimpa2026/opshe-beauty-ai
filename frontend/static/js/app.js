@@ -147,6 +147,24 @@ btnRetake.addEventListener('click', () => {
 });
 btnAnalyze.addEventListener('click', runAnalysis);
 
+// ══ NOTIFIKASI FOTO DITOLAK (mis. buram) ══
+function showRejectionNotice(notice) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,15,.82);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="background:var(--dark-2);border:1px solid var(--pink);border-radius:var(--radius-lg);max-width:380px;width:100%;padding:26px;text-align:center;color:var(--off-white);box-shadow:var(--glow-pink);font-family:'Space Grotesk',sans-serif;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:19px;font-weight:700;color:var(--white);margin-bottom:12px;letter-spacing:.02em;">${notice.title || 'Foto Ditolak'}</div>
+      <div style="font-size:14px;line-height:1.7;color:var(--muted);white-space:pre-line;margin-bottom:22px;">${notice.message || 'Foto tidak bisa dianalisis, silakan coba lagi.'}</div>
+      <button id="rejectionRetakeBtn" style="background:linear-gradient(90deg,var(--pink),var(--purple));color:var(--white);border:none;border-radius:var(--radius-xl);padding:12px 28px;font-weight:700;font-size:14px;font-family:'Space Grotesk',sans-serif;cursor:pointer;box-shadow:var(--shadow-pink);">${notice.action_label || 'Ambil Ulang Foto'}</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#rejectionRetakeBtn').addEventListener('click', () => {
+    overlay.remove();
+    hide(previewModal);
+    if (stream) openCamera(); else show(nameModal);
+  });
+}
+
 // ══ ANALISIS ══
 const LOADING_STEPS = [
   { text: 'Mendeteksi landmark wajah...', progress: 15 },
@@ -183,7 +201,14 @@ async function runAnalysis() {
     progressBar.style.width = '100%';
 
     if (!res.ok) {
-      setTimeout(() => { hide(loadingOverlay); alert(data.detail || 'Analisis gagal. Coba lagi.'); }, 500);
+      setTimeout(() => {
+        hide(loadingOverlay);
+        if (data && data.rejected) {
+          showRejectionNotice(data);
+        } else {
+          alert(data.detail || 'Analisis gagal. Coba lagi.');
+        }
+      }, 500);
       return;
     }
     lastResult = data;
