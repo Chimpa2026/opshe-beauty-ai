@@ -539,6 +539,7 @@ function generatePDF(data) {
   }
 
   // ── Score section
+  checkBreak(32);
   doc.setFillColor(...pale);
   doc.roundedRect(10, y, W - 20, 32, 4, 4, 'F');
   doc.setFillColor(...pink);
@@ -569,6 +570,20 @@ function generatePDF(data) {
 
   y += 42;
 
+  // ── Page-break helper: pindah ke halaman baru kalau konten akan melebihi tinggi kertas
+  function checkBreak(need) {
+    if (y + need > 280) {
+      doc.addPage();
+      doc.setFillColor(240, 41, 123);
+      doc.rect(0, 0, W, 10, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(`OPSHE Beauty AI — Laporan Analisis Kulit | ${userName || ''}`, 10, 7);
+      y = 18;
+    }
+  }
+
   // ── Section helper
   function sectionTitle(title) {
     doc.setFillColor(...pink);
@@ -592,6 +607,7 @@ function generatePDF(data) {
   }
 
   // ── Metrik Kulit
+  checkBreak(15);
   sectionTitle('METRIK KULIT');
   const metrikRows = [
     ['Kadar Minyak', `${Math.round(data.oil_level)}%`],
@@ -605,6 +621,7 @@ function generatePDF(data) {
     ['Garis Halus', terjemahLevel(data.fine_lines_level)],
   ];
   for (let i = 0; i < metrikRows.length; i += 2) {
+    checkBreak(8);
     doc.setFillColor(i % 4 === 0 ? 252 : 255, 248, 252);
     doc.rect(10, y - 4, W - 20, 8, 'F');
     twoColRow(metrikRows[i][0], metrikRows[i][1], false);
@@ -614,6 +631,7 @@ function generatePDF(data) {
   y += 4;
 
   // ── Analisis Jerawat
+  checkBreak(15);
   sectionTitle('ANALISIS JERAWAT & NODA');
   const am = data.acne_metrics || {};
   const acneItems = [
@@ -623,6 +641,7 @@ function generatePDF(data) {
     ['Bekas Jerawat', am.acne_scar ?? 0],
   ];
   for (let i = 0; i < acneItems.length; i += 2) {
+    checkBreak(8);
     doc.setFillColor(i % 4 === 0 ? 252 : 255, 248, 252);
     doc.rect(10, y - 4, W - 20, 8, 'F');
     twoColRow(acneItems[i][0], acneItems[i][1], false);
@@ -633,9 +652,11 @@ function generatePDF(data) {
 
   // ── Zona Wajah
   if (data.zones && data.zones.length > 0) {
+    checkBreak(15);
     sectionTitle('ANALISIS PER ZONA WAJAH');
     const namaZona = {'Forehead':'Dahi','Nose':'Hidung','Left Cheek':'Pipi Kiri','Right Cheek':'Pipi Kanan','Chin':'Dagu'};
     data.zones.forEach(z => {
+      checkBreak(11);
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...pink);
