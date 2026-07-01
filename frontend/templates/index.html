@@ -181,6 +181,109 @@
       </div>
     </div>
 
+    <!-- FACE MAP -->
+    <div class="facemap-section">
+      <h3 class="metrics-heading">[ AI FACE MAP ]</h3>
+      <div class="facemap-container">
+
+        <!-- Panel Kiri: Foto + Heatmap -->
+        <div class="facemap-panel">
+          <p class="facemap-label">📸 Foto Analisis + Heatmap</p>
+          <div class="facemap-photo-box" id="photoBox">
+            <div class="facemap-no-photo" id="noPhoto">
+              <span style="font-size:2rem">📷</span>
+              <span>Foto muncul setelah analisis</span>
+            </div>
+            <img id="facemapPhoto" src="" alt="Face" class="facemap-img" style="display:none"/>
+            <canvas id="heatCanvas" class="facemap-overlay"></canvas>
+          </div>
+          <div class="facemap-stats">
+            <div class="facemap-stat">
+              <div class="facemap-stat-val" id="statBest">--</div>
+              <div class="facemap-stat-lbl">Zona Terbaik</div>
+            </div>
+            <div class="facemap-stat">
+              <div class="facemap-stat-val" id="statWorst">--</div>
+              <div class="facemap-stat-lbl">Perlu Perhatian</div>
+            </div>
+            <div class="facemap-stat">
+              <div class="facemap-stat-val" id="statAvg">--</div>
+              <div class="facemap-stat-lbl">Rata-rata</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel Kanan: SVG Diagram -->
+        <div class="facemap-panel">
+          <p class="facemap-label">🗺 Peta Kondisi Per Zona</p>
+          <div class="facemap-svg-box">
+            <div class="facemap-svg-wrap">
+              <svg viewBox="0 0 260 340" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="130" cy="178" rx="108" ry="136" fill="none" stroke="rgba(255,0,110,0.2)" stroke-width="0.8" stroke-dasharray="3 2"/>
+                <!-- DAHI -->
+                <ellipse id="svgDahi" cx="130" cy="72" rx="75" ry="42" fill="rgba(255,0,110,0.08)" stroke="rgba(255,0,110,0.3)" stroke-width="1"/>
+                <text x="130" y="65" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.5)" font-family="sans-serif" font-weight="600" letter-spacing="1.5">DAHI</text>
+                <text id="svgDahiScore" x="130" y="84" text-anchor="middle" font-size="18" fill="rgba(255,0,110,0.5)" font-family="monospace" font-weight="700">--</text>
+                <!-- Alis -->
+                <path d="M 72 106 Q 91 98 110 104" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M 150 104 Q 169 98 188 106" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Mata kiri -->
+                <ellipse cx="91" cy="120" rx="21" ry="9" fill="rgba(0,0,0,0.3)" stroke="rgba(0,245,212,0.25)" stroke-width="0.8"/>
+                <ellipse cx="91" cy="120" rx="8" ry="6" fill="rgba(0,0,0,0.5)"/>
+                <!-- Mata kanan -->
+                <ellipse cx="169" cy="120" rx="21" ry="9" fill="rgba(0,0,0,0.3)" stroke="rgba(0,245,212,0.25)" stroke-width="0.8"/>
+                <ellipse cx="169" cy="120" rx="8" ry="6" fill="rgba(0,0,0,0.5)"/>
+                <!-- HIDUNG -->
+                <ellipse id="svgHidung" cx="130" cy="183" rx="28" ry="42" fill="rgba(255,0,110,0.08)" stroke="rgba(255,0,110,0.3)" stroke-width="1"/>
+                <ellipse cx="120" cy="202" rx="6" ry="4" fill="rgba(0,0,0,0.3)"/>
+                <ellipse cx="140" cy="202" rx="6" ry="4" fill="rgba(0,0,0,0.3)"/>
+                <text x="130" y="173" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.5)" font-family="sans-serif" font-weight="600" letter-spacing="1">HIDUNG</text>
+                <text id="svgHidungScore" x="130" y="191" text-anchor="middle" font-size="15" fill="rgba(255,0,110,0.5)" font-family="monospace" font-weight="700">--</text>
+                <!-- PIPI KIRI -->
+                <ellipse id="svgPipiKiri" cx="52" cy="183" rx="50" ry="58" fill="rgba(255,0,110,0.08)" stroke="rgba(255,0,110,0.3)" stroke-width="1"/>
+                <text x="52" y="174" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.5)" font-family="sans-serif" font-weight="600" letter-spacing="0.5">PIPI KIRI</text>
+                <text id="svgPipiKiriScore" x="52" y="192" text-anchor="middle" font-size="15" fill="rgba(255,0,110,0.5)" font-family="monospace" font-weight="700">--</text>
+                <!-- PIPI KANAN -->
+                <ellipse id="svgPipiKanan" cx="208" cy="183" rx="50" ry="58" fill="rgba(255,0,110,0.08)" stroke="rgba(255,0,110,0.3)" stroke-width="1"/>
+                <text x="208" y="174" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.5)" font-family="sans-serif" font-weight="600" letter-spacing="0.5">PIPI KANAN</text>
+                <text id="svgPipiKananScore" x="208" y="192" text-anchor="middle" font-size="15" fill="rgba(255,0,110,0.5)" font-family="monospace" font-weight="700">--</text>
+                <!-- Bibir -->
+                <path d="M 110 248 Q 130 256 150 248 Q 143 260 130 261 Q 117 260 110 248Z" fill="rgba(255,0,110,0.25)" stroke="rgba(255,0,110,0.4)" stroke-width="0.8"/>
+                <!-- DAGU -->
+                <ellipse id="svgDagu" cx="130" cy="280" rx="58" ry="34" fill="rgba(255,0,110,0.08)" stroke="rgba(255,0,110,0.3)" stroke-width="1"/>
+                <text x="130" y="274" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.5)" font-family="sans-serif" font-weight="600" letter-spacing="1.5">DAGU</text>
+                <text id="svgDaguScore" x="130" y="291" text-anchor="middle" font-size="18" fill="rgba(255,0,110,0.5)" font-family="monospace" font-weight="700">--</text>
+              </svg>
+            </div>
+
+            <!-- Legend -->
+            <div class="facemap-legend">
+              <div class="legend-row"><span class="legend-dot" style="background:#1D9E75"></span>Sangat Baik (80–100)</div>
+              <div class="legend-row"><span class="legend-dot" style="background:#378ADD"></span>Baik (60–79)</div>
+              <div class="legend-row"><span class="legend-dot" style="background:#BA7517"></span>Cukup (40–59)</div>
+              <div class="legend-row"><span class="legend-dot" style="background:#D85A30"></span>Perlu Perhatian (20–39)</div>
+              <div class="legend-row" style="grid-column:span 2"><span class="legend-dot" style="background:#A32D2D"></span>Masalah Serius (&lt;20)</div>
+            </div>
+
+            <!-- Zone bars -->
+            <div class="facemap-bars">
+              <div class="fmbar-row"><span class="fmbar-name">Dahi</span><div class="fmbar-wrap"><div class="fmbar-fill" id="barDahi"></div></div><span class="fmbar-score" id="barDahiScore">--</span></div>
+              <div class="fmbar-row"><span class="fmbar-name">Hidung</span><div class="fmbar-wrap"><div class="fmbar-fill" id="barHidung"></div></div><span class="fmbar-score" id="barHidungScore">--</span></div>
+              <div class="fmbar-row"><span class="fmbar-name">Pipi Kiri</span><div class="fmbar-wrap"><div class="fmbar-fill" id="barPipiKiri"></div></div><span class="fmbar-score" id="barPipiKiriScore">--</span></div>
+              <div class="fmbar-row"><span class="fmbar-name">Pipi Kanan</span><div class="fmbar-wrap"><div class="fmbar-fill" id="barPipiKanan"></div></div><span class="fmbar-score" id="barPipiKananScore">--</span></div>
+              <div class="fmbar-row"><span class="fmbar-name">Dagu</span><div class="fmbar-wrap"><div class="fmbar-fill" id="barDagu"></div></div><span class="fmbar-score" id="barDaguScore">--</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="metrics-section">
+      <h3 class="metrics-heading">[ METRIK KULIT ]</h3>
+      <div class="metrics-grid" id="metricsGrid"></div>
+    </div>
+
     <div class="metrics-section">
       <h3 class="metrics-heading">[ METRIK KULIT ]</h3>
       <div class="metrics-grid" id="metricsGrid"></div>

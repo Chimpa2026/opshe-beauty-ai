@@ -211,6 +211,18 @@ btnDownloadPdf.addEventListener('click', () => {
   generatePDF(lastResult);
 });
 
+function calcZoneScorePDF(z) {
+  const oil  = z.oil_level || 0;
+  const dry  = z.dryness || 0;
+  const pore = z.pore_visibility || 0;
+  const red  = z.redness || 0;
+  const tex  = {'Smooth':100,'Normal':70,'Rough':35,'Halus':100,'Kasar':35}[z.texture] || 70;
+  return Math.max(0, Math.min(100,
+    (100-oil*0.4)*0.2+(100-dry*0.8)*0.2+
+    (100-pore*0.7)*0.2+(100-red*0.7)*0.2+tex*0.2
+  ));
+}
+
 function generatePDF(data) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -290,6 +302,90 @@ function generatePDF(data) {
   doc.text(`Skor: ${data.overall_score}/100  |  Jenis Kulit: ${terjemahSkinType(data.skin_type)}  |  ${tgl}`, infoX, y + 33);
 
   y += profileH + 8;
+
+  // ── Face Map Section ──
+  const zones = data.zones || [];
+  if (zones.length > 0) {
+    doc.setFillColor(245, 240, 255);
+    doc.roundedRect(10, y, W - 20, 8, 2, 2, 'F');
+    doc.setFillColor(167, 139, 250);
+    doc.roundedRect(10, y, 3, 8, 1, 1, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(80, 40, 140);
+    doc.text('AI FACE MAP — KONDISI PER ZONA WAJAH', 16, y + 5.5);
+    y += 12;
+
+    // Grid 5 zone cards
+    const zoneW = (W - 20) / 5;
+    const zoneH = 22;
+    const zoneColors = {
+      score80: [29, 158, 117],
+      score60: [55, 138, 221],
+      score40: [186, 117, 23],
+      score20: [216, 90, 48],
+      score0:  [163, 45, 45],
+    };
+
+    function getZoneColor(s) {
+      if (s>=80) return zoneColors.score80;
+      if (s>=60) return zoneColors.score60;
+      if (s>=40) return zoneColors.score40;
+      if (s>=20) return zoneColors.score20;
+      return zoneColors.score0;
+    }
+
+    const namaZonaPDF = {'Forehead':'Dahi','Nose':'Hidung','Left Cheek':'Pipi Kiri','Right Cheek':'Pipi Kanan','Chin':'Dagu'};
+
+    zones.forEach((z, i) => {
+      const rawScore = calcZoneScorePDF(z);
+      const ratio = data.overall_score / (zones.reduce((a,zz) => a + calcZoneScorePDF(zz), 0) / zones.length || 1);
+      const score = Math.round(Math.max(0, Math.min(100, rawScore * ratio)));
+      const col = getZoneColor(score);
+      const xPos = 10 + i * zoneW;
+
+      doc.setFillColor(col[0], col[1], col[2]);
+      doc.setFillColor(col[0], col[1], col[2], 0.15);
+      doc.roundedRect(xPos + 1, y, zoneW - 2, zoneH, 3, 3, 'F');
+      doc.setDrawColor(...col);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(xPos + 1, y, zoneW - 2, zoneH, 3, 3, 'S');
+
+      // Zone name
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...col);
+      const zoneName = namaZonaPDF[z.zone] || z.zone;
+      doc.text(zoneName, xPos + zoneW/2, y + 7, { align: 'center' });
+
+      // Score
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...col);
+      doc.text(String(score), xPos + zoneW/2, y + 17, { align: 'center' });
+    });
+
+    y += zoneH + 6;
+
+    // Mini legend
+    const legendItems = [
+      { label: 'Sangat Baik (80-100)', color: [29,158,117] },
+      { label: 'Baik (60-79)', color: [55,138,221] },
+      { label: 'Cukup (40-59)', color: [186,117,23] },
+      { label: 'Perlu Perhatian (<40)', color: [216,90,48] },
+    ];
+    let lx = 10;
+    legendItems.forEach(l => {
+      doc.setFillColor(...l.color);
+      doc.circle(lx + 2, y + 1.5, 2, 'F');
+      doc.setFontSize(6);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 80, 130);
+      doc.text(l.label, lx + 5, y + 2.5);
+      lx += 46;
+    });
+    y += 8;
+  }
 
   // ── Score section
   doc.setFillColor(...pale);
@@ -506,6 +602,7 @@ function generatePDF(data) {
 // ══ RENDER DASHBOARD ══
 function renderDashboard(data) {
   renderUserProfile();
+  renderFaceMap(data);
   renderScore(data);
   renderMetrics(data);
   renderAcne(data);
@@ -524,6 +621,175 @@ function renderUserProfile() {
     avatarImg.src = userPhotoDataUrl;
     avatarImg.style.display = 'block';
   }
+}
+
+const ZONE_IDS = {
+  'Forehead':    { svg:'svgDahi',      svgS:'svgDahiScore',      bar:'barDahi',      barS:'barDahiScore'      },
+  'Nose':        { svg:'svgHidung',    svgS:'svgHidungScore',    bar:'barHidung',    barS:'barHidungScore'    },
+  'Left Cheek':  { svg:'svgPipiKiri',  svgS:'svgPipiKiriScore',  bar:'barPipiKiri',  barS:'barPipiKiriScore'  },
+  'Right Cheek': { svg:'svgPipiKanan', svgS:'svgPipiKananScore', bar:'barPipiKanan', barS:'barPipiKananScore' },
+  'Chin':        { svg:'svgDagu',      svgS:'svgDaguScore',      bar:'barDagu',      barS:'barDaguScore'      },
+  'Dahi':        { svg:'svgDahi',      svgS:'svgDahiScore',      bar:'barDahi',      barS:'barDahiScore'      },
+  'Hidung':      { svg:'svgHidung',    svgS:'svgHidungScore',    bar:'barHidung',    barS:'barHidungScore'    },
+  'Pipi Kiri':   { svg:'svgPipiKiri',  svgS:'svgPipiKiriScore',  bar:'barPipiKiri',  barS:'barPipiKiriScore'  },
+  'Pipi Kanan':  { svg:'svgPipiKanan', svgS:'svgPipiKananScore', bar:'barPipiKanan', barS:'barPipiKananScore' },
+  'Dagu':        { svg:'svgDagu',      svgS:'svgDaguScore',      bar:'barDagu',      barS:'barDaguScore'      },
+};
+const ZONE_NAME_ID = {'Forehead':'Dahi','Nose':'Hidung','Left Cheek':'Pipi Kiri','Right Cheek':'Pipi Kanan','Chin':'Dagu'};
+
+function zoneScoreColor(s) {
+  if (s>=80) return '#1D9E75';
+  if (s>=60) return '#378ADD';
+  if (s>=40) return '#BA7517';
+  if (s>=20) return '#D85A30';
+  return '#A32D2D';
+}
+function zoneScoreColorLight(s) {
+  if (s>=80) return 'rgba(29,158,117,0.22)';
+  if (s>=60) return 'rgba(55,138,221,0.22)';
+  if (s>=40) return 'rgba(186,117,23,0.22)';
+  if (s>=20) return 'rgba(216,90,48,0.22)';
+  return 'rgba(163,45,45,0.22)';
+}
+
+let _globalOverallScore = 0;
+let _globalZones = [];
+
+function calcZoneScore(z, overallScore) {
+  const oil  = z.oil_level || 0;
+  const dry  = z.dryness || 0;
+  const pore = z.pore_visibility || 0;
+  const red  = z.redness || 0;
+  const tex  = {'Smooth':100,'Normal':70,'Rough':35,'Halus':100,'Kasar':35}[z.texture] || 70;
+  const raw  = (100-oil*0.4)*0.2 + (100-dry*0.8)*0.2 +
+               (100-pore*0.7)*0.2 + (100-red*0.7)*0.2 + tex*0.2;
+
+  // Kalibrasikan zone score agar rata-rata konsisten dengan overall score
+  if (_globalZones.length > 0 && overallScore > 0) {
+    const rawAvg = _globalZones.reduce((a,zz) => {
+      const o=zz.oil_level||0,d=zz.dryness||0,p=zz.pore_visibility||0,r=zz.redness||0;
+      const t={'Smooth':100,'Normal':70,'Rough':35,'Halus':100,'Kasar':35}[zz.texture]||70;
+      return a + (100-o*0.4)*0.2+(100-d*0.8)*0.2+(100-p*0.7)*0.2+(100-r*0.7)*0.2+t*0.2;
+    }, 0) / _globalZones.length;
+    const ratio = overallScore / (rawAvg || 1);
+    return Math.round(Math.max(0, Math.min(100, raw * ratio)));
+  }
+  return Math.round(Math.max(0, Math.min(100, raw)));
+}
+
+function scoreToColor(s) {
+  if (s >= 80) return '#00F5D4';
+  if (s >= 60) return '#7FD4A0';
+  if (s >= 40) return '#FFE600';
+  if (s >= 20) return '#FF6B35';
+  return '#FF006E';
+}
+
+function renderFaceMap(data) {
+  const zones = data.zones || [];
+  _globalOverallScore = data.overall_score || 0;
+  _globalZones = zones;
+  const scores = zones.map(z => ({ ...z, score: calcZoneScore(z, _globalOverallScore) }));
+
+  // Foto
+  const photoEl = document.getElementById('facemapPhoto');
+  const noPhoto = document.getElementById('noPhoto');
+  if (userPhotoDataUrl && photoEl) {
+    photoEl.src = userPhotoDataUrl;
+    photoEl.style.display = 'block';
+    if (noPhoto) noPhoto.style.display = 'none';
+    photoEl.onload = () => drawHeatmap(zones);
+    if (photoEl.complete) drawHeatmap(zones);
+  }
+
+  // Stats
+  if (scores.length) {
+    const sorted = [...scores].sort((a,b) => b.score - a.score);
+    const best  = ZONE_NAME_ID[sorted[0].zone] || sorted[0].zone;
+    const worst = ZONE_NAME_ID[sorted[sorted.length-1].zone] || sorted[sorted.length-1].zone;
+    const avg   = Math.round(scores.reduce((a,z)=>a+z.score,0)/scores.length);
+    const sb = document.getElementById('statBest');   if(sb) sb.textContent = best;
+    const sw = document.getElementById('statWorst');  if(sw) sw.textContent = worst;
+    const sa = document.getElementById('statAvg');    if(sa) sa.textContent = avg;
+  }
+
+  // SVG + bars
+  scores.forEach(z => {
+    const ids = ZONE_IDS[z.zone];
+    if (!ids) return;
+    const col = zoneScoreColor(z.score);
+    const colL = zoneScoreColorLight(z.score);
+
+    const svgEl = document.getElementById(ids.svg);
+    if (svgEl) { svgEl.setAttribute('fill', colL); svgEl.setAttribute('stroke', col); svgEl.setAttribute('stroke-width','2'); }
+
+    const svgS = document.getElementById(ids.svgS);
+    if (svgS) { svgS.textContent = z.score; svgS.setAttribute('fill', col); }
+
+    const barEl = document.getElementById(ids.bar);
+    if (barEl) { barEl.style.width = z.score+'%'; barEl.style.background = col; }
+
+    const barS = document.getElementById(ids.barS);
+    if (barS) { barS.textContent = z.score; barS.style.color = col; }
+  });
+}
+
+function drawHeatmap(zones) {
+  const canvas  = document.getElementById('facemapOverlay');
+  const photoEl = document.getElementById('facemapPhoto');
+  if (!canvas || !photoEl) return;
+  const W = photoEl.offsetWidth || 300;
+  const H = photoEl.offsetHeight || 400;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  const regions = {
+    'Forehead':    {cx:0.50,cy:0.18,rx:0.40,ry:0.13},
+    'Nose':        {cx:0.50,cy:0.50,rx:0.14,ry:0.16},
+    'Left Cheek':  {cx:0.22,cy:0.53,rx:0.22,ry:0.20},
+    'Right Cheek': {cx:0.78,cy:0.53,rx:0.22,ry:0.20},
+    'Chin':        {cx:0.50,cy:0.78,rx:0.26,ry:0.13},
+    'Dahi':        {cx:0.50,cy:0.18,rx:0.40,ry:0.13},
+    'Hidung':      {cx:0.50,cy:0.50,rx:0.14,ry:0.16},
+    'Pipi Kiri':   {cx:0.22,cy:0.53,rx:0.22,ry:0.20},
+    'Pipi Kanan':  {cx:0.78,cy:0.53,rx:0.22,ry:0.20},
+    'Dagu':        {cx:0.50,cy:0.78,rx:0.26,ry:0.13},
+  };
+
+  zones.forEach(z => {
+    const reg = regions[z.zone];
+    if (!reg) return;
+    const score = calcZoneScore(z);
+    const color = scoreToColor(score);
+    const cx = reg.cx*W, cy = reg.cy*H;
+    const rx = reg.rx*W, ry = reg.ry*H;
+    const r = parseInt(color.slice(1,3),16);
+    const g = parseInt(color.slice(3,5),16);
+    const b = parseInt(color.slice(5,7),16);
+
+    const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(rx,ry));
+    grad.addColorStop(0, `rgba(${r},${g},${b},0.55)`);
+    grad.addColorStop(0.7, `rgba(${r},${g},${b},0.25)`);
+    grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.restore();
+
+    // Score label
+    ctx.save();
+    ctx.font = `bold ${Math.round(W*0.055)}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+    ctx.fillText(score, cx, cy + W*0.02);
+    ctx.restore();
+  });
 }
 
 function renderScore(data) {
