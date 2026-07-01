@@ -13,7 +13,12 @@ from PIL import Image
 
 from backend.utils.image_processing import preprocess_image, check_image_quality, pil_to_cv2
 from backend.services.face_detection import detect_face
-from ai.vision_analyzer import analyze_skin_with_vision, calculate_overall_score_from_vision
+from ai.vision_analyzer import (
+    analyze_skin_with_vision,
+    calculate_overall_score_from_vision,
+    check_photo_quality,
+    BlurryPhotoError,
+)
 from ai.recommendation_engine import generate_recommendations
 
 import numpy as np
@@ -128,6 +133,10 @@ def analyze_image(image_bytes: bytes) -> Dict[str, Any]:
         logger.warning(f"[{session_id}] Vision API failed: {e}")
 
     if vision_result:
+        notice = check_photo_quality(vision_result)
+        if notice:
+            logger.warning(f"[{session_id}] Foto ditolak: buram/kualitas rendah")
+            raise BlurryPhotoError(notice)
         logger.info(f"[{session_id}] Vision API success!")
         result = _build_result_from_vision(vision_result, session_id)
     else:
